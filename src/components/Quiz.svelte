@@ -1,4 +1,6 @@
 <script>
+	/* import {faceDetected} from './stores.js'; */
+	let faceDetected = false;
 		let questions = [
 				 {
 						"question":"Who is the inventor of C Language?",
@@ -67,6 +69,11 @@
 			function restartQuiz(){
 				answers = new Array(questions.length).fill(null);
 				currPosition = 0;
+			}
+
+			function backToMenu(){
+				answers = new Array(questions.length).fill(null);
+				currPosition = -1;
 			}
 
 </script>
@@ -142,12 +149,19 @@
 		background:#111;
 	}
 
+	.quiz .scoreboard {
+		flex-direction:column;
+	}
+	.quiz .scoreboard h1 {
+		margin-bottom:10px;
+	}
+
 </style>
 
 <div class="quiz">
 	{#if currPosition == -1}
 		<div class="menu">
-			<button on:click={() => currPosition = 0}>Start Quiz</button>
+			<button on:click={() => currPosition = 0} disabled={!faceDetected}>Start Quiz</button>
 		</div>
 	{:else if (currPosition < answers.length)}
 		<div class="attempt">
@@ -184,6 +198,7 @@
 				Your Score: {getScore()}
 			</h1>
 			<button on:click={() => restartQuiz()}>Restart Quiz</button>
+			<button on:click={() => backToMenu()}>Back to menu</button>
 		</div>
 	{/if}
 </div>
