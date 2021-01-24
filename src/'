@@ -1,0 +1,13 @@
+<script>
+		import { onMount } from "svelte";
+		let data = [];
+
+	onMount(async () => {
+			const response = await fetch("../json/questions.json");
+			data = await response.json();
+		});
+</script>
+
+<h1>TESTING INSIDE QUIZ</h1>
+<button on:click= { console.log(data) } 	>Test</button>
+
