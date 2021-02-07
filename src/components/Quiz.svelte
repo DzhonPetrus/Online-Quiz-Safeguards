@@ -1,6 +1,61 @@
 <script>
+		/*START OF TIMER*/
+	const minutesToSeconds = minutes => minutes * 60;
+	const secondsToMinutes = seconds => Math.floor(seconds / 60);
+	const padWithZeroes = number => number.toString().padStart(2, '0');
+	var quizTime = minutesToSeconds(.5);
+	var timerInterval;
+
+	function formatTime(timeInSeconds){
+			const minutes = secondsToMinutes(timeInSeconds);
+			const remainingSeconds = timeInSeconds % 60;
+			return `${padWithZeroes(minutes)}:${padWithZeroes(remainingSeconds)}`;
+		}
+
+	function startTimer(){
+			timerInterval = setInterval(() => {
+					quizTime--;
+					if(quizTime == 0){
+							currPosition = answers.length;
+							stopTimer();
+						}
+				}, 1000);
+	};
+	function stopTimer(){
+			clearInterval(timerInterval);
+		};
+
+
+		/*END OF TIMER*/
+
+		/*START OF ACTIVITY LOGGING*/
+
+	$: activityLog = [];
+		const getDateTime = () => {
+				var date = new Date().toJSON().slice(0,10);
+				var time = new Date().toJSON().slice(11,19)
+				return date+' '+time;
+			}
+
+	const pushLog = (event, description, currTime) => {
+
+		activityLog = [...activityLog, {
+			"event": event,
+			"time": currTime,
+			"description": description,
+		}];
+
+		console.log(activityLog);
+	}
+
+	window.onfocus = () =>  pushLog("Focused",`User refocused on the window at ${getDateTime()}`, getDateTime());
+	window.onblur = () =>  pushLog("Defocused",`User left the window at ${getDateTime()}`, getDateTime());
+
+		/*END OF ACTIVITY LOGGING*/
+
+
 	/* import {faceDetected} from './stores.js'; */
-	let faceDetected = false;
+	let faceDetected = true;
 		let questions = [
 				 {
 						"question":"Who is the inventor of C Language?",
@@ -56,6 +111,11 @@
 			let answers = new Array(questions.length).fill(null);
 			let currPosition = -1;
 
+			function startQuiz(){
+					currPosition = 0;
+					startTimer();
+				}
+
 			function getScore(){
 					let score = answers.reduce((total, val, index) => {
 							if(questions[index].correctIndex == val)
@@ -69,6 +129,8 @@
 			function restartQuiz(){
 				answers = new Array(questions.length).fill(null);
 				currPosition = 0;
+				quizTime = minutesToSeconds(.5);
+				startTimer();
 			}
 
 			function backToMenu(){
@@ -158,10 +220,25 @@
 
 </style>
 
+
+{#if activityLog.length > 0}
+	{#each activityLog as log}
+		{log.event}
+		<br>
+
+		{log.description}
+		<br>
+
+	{/each}
+{/if}
+
+
+
+
 <div class="quiz">
 	{#if currPosition == -1}
 		<div class="menu">
-			<button on:click={() => currPosition = 0} disabled={!faceDetected}>Start Quiz</button>
+			<button on:click={() => startQuiz()} disabled={!faceDetected}>Start Quiz</button>
 		</div>
 	{:else if (currPosition < answers.length)}
 		<div class="attempt">
@@ -185,6 +262,8 @@
 				<div class="progress-bar">
 					<div style="width:{currPosition/questions.length*100}%"></div>
 				</div>
+
+				{formatTime(quizTime)}
 
 				<div class="item-control">
 					<button disabled={currPosition==0} on:click={() => currPosition--}>&lt;</button>
