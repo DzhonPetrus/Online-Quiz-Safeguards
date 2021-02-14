@@ -1,11 +1,5 @@
-import {writable, readable} from 'svelte/store';
-import {currPosition, value_questions} from './QuizStore';
-
-function getStoreValue(store){
-	let $val
-	store.subscribe($ => $val = $);
-	return $val
-}
+import {writable, get} from 'svelte/store';
+import {currPosition, questions} from './QuizStore';
 
 /*START OF TIMER*/
 export const QUIZ_TIME = 0.05;
@@ -24,13 +18,13 @@ export const formatTime = (timeInSeconds) => {
 export function startTimer(){
     timerInterval = setInterval(() => {
       quizTime.update(n => n-1);
-      if(getStoreValue(quizTime) == 0)
+      if(get(quizTime) == 0)
           stopTimer();
       }, 1000);
 };
 function stopTimer(){
     clearInterval(timerInterval);
-    currPosition.set(value_questions.length);
+    currPosition.set(get(questions).length);
   };
 
 

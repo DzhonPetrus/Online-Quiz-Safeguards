@@ -1,11 +1,5 @@
-import {writable, readable, derived} from 'svelte/store';
+import {writable, readable, get} from 'svelte/store';
 import {startTimer, quizTime, minutesToSeconds, QUIZ_TIME} from './TimerStore.js';
-
-function getStoreValue(store){
-	let $val
-	store.subscribe($ => $val = $);
-	return $val
-}
 
 export const questions = readable([
 		 {
@@ -60,25 +54,23 @@ export const questions = readable([
 		 }
 	]);
 
-export let value_questions = getStoreValue(questions);
 
-export let answers = writable(new Array(value_questions.length).fill(null));
+export let answers = writable(new Array(get(questions).length).fill(null));
 export let currPosition = writable(-1);
 
 export function startQuiz(){
 		currPosition.set(0);
 		startTimer();
 	}
-let value_answers = getStoreValue(answers);
 
 export function getScore(){
-	let score = value_answers.reduce((total, val, index) => {
-			if(value_questions[index].correctIndex == val)
+	let score = get(answers).reduce((total, val, index) => {
+			if(get(questions)[index].correctIndex == val)
 				return total+1;
 			return total;
 		},0);
 
-	return `${score/value_questions.length*100}%`;
+	return `${score/get(questions).length*100}%`;
 }
 
 export function restartQuiz(){
@@ -93,9 +85,7 @@ export function backToMenu(){
 }
 
 function reset(){
-	value_questions = getStoreValue(questions);
-	answers.set(new Array(value_questions.length).fill(null));
-	value_answers = getStoreValue(answers);
+	answers.set(new Array(get(questions).length).fill(null));
 	quizTime.set(minutesToSeconds(QUIZ_TIME));
 }
 
