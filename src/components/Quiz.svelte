@@ -1,142 +1,16 @@
 <script>
-		/*START OF TIMER*/
-	const minutesToSeconds = minutes => minutes * 60;
-	const secondsToMinutes = seconds => Math.floor(seconds / 60);
-	const padWithZeroes = number => number.toString().padStart(2, '0');
-	var quizTime = minutesToSeconds(.5);
-	var timerInterval;
+	/* STORES */
+	import {faceDetected} from '../store/FaceDetectionStore.js';
+	import {pushLog, getDateTime} from '../store/ActivityLogStore.js';
+	import { currPosition, questions, answers, startQuiz, getScore, restartQuiz, backToMenu } from '../store/QuizStore.js';
 
-	function formatTime(timeInSeconds){
-			const minutes = secondsToMinutes(timeInSeconds);
-			const remainingSeconds = timeInSeconds % 60;
-			return `${padWithZeroes(minutes)}:${padWithZeroes(remainingSeconds)}`;
-		}
+		/* COMPONENTS */
+	import ActivityLog from './ActivityLog.svelte';
+	import Timer from './Timer.svelte';
 
-	function startTimer(){
-			timerInterval = setInterval(() => {
-					quizTime--;
-					if(quizTime == 0){
-							currPosition = answers.length;
-							stopTimer();
-						}
-				}, 1000);
-	};
-	function stopTimer(){
-			clearInterval(timerInterval);
-		};
-
-
-		/*END OF TIMER*/
-
-		/*START OF ACTIVITY LOGGING*/
-
-	$: activityLog = [];
-		const getDateTime = () => {
-				var date = new Date().toJSON().slice(0,10);
-				var time = new Date().toJSON().slice(11,19)
-				return date+' '+time;
-			}
-
-	const pushLog = (event, description, currTime) => {
-
-		activityLog = [...activityLog, {
-			"event": event,
-			"time": currTime,
-			"description": description,
-		}];
-
-		console.log(activityLog);
-	}
-
+	/* ACTIVITY LOG */
 	window.onfocus = () =>  pushLog("Focused",`User refocused on the window at ${getDateTime()}`, getDateTime());
 	window.onblur = () =>  pushLog("Defocused",`User left the window at ${getDateTime()}`, getDateTime());
-
-		/*END OF ACTIVITY LOGGING*/
-
-
-	/* import {faceDetected} from './stores.js'; */
-	let faceDetected = true;
-		let questions = [
-				 {
-						"question":"Who is the inventor of C Language?",
-						"options":[
-							 "Rasmus Lerdorf",
-							 "James Gosling",
-							 "Dennis Ritchie",
-							 "Grace Hopper"
-						],
-						"correctIndex":2
-				 },
-				 {
-						"question":"Who is the father of PHP?",
-						"options":[
-							 "Rasmus Lerdorf",
-							 "James Gosling",
-							 "Dennis Ritchie",
-							 "Grace Hopper"
-						],
-						"correctIndex":0
-				 },
-				 {
-						"question":"Who created Linux?",
-						"options":[
-							 "Steve Jobs",
-							 "Bill Gates",
-							 "Mark Zuckerberg",
-							 "Linus Torvalds"
-						],
-						"correctIndex":3
-				 },
-				 {
-						"question":"Who is the founder of Amazon?",
-						"options":[
-							 "Steve Jobs",
-							 "Elon Musk",
-							 "Jack Ma",
-							 "Jeff Bezos"
-						],
-						"correctIndex":3
-				 },
-				 {
-						"question":"Who is the founder of Alibaba?",
-						"options":[
-							 "Steve Jobs",
-							 "Elon Musk",
-							 "Jack Ma",
-							 "Jeff Bezos"
-						],
-						"correctIndex":2
-				 }
-			];
-			let answers = new Array(questions.length).fill(null);
-			let currPosition = -1;
-
-			function startQuiz(){
-					currPosition = 0;
-					startTimer();
-				}
-
-			function getScore(){
-					let score = answers.reduce((total, val, index) => {
-							if(questions[index].correctIndex == val)
-								return total+1;
-							return total;
-						},0);
-
-					return `${score/questions.length*100}%`;
-				}
-
-			function restartQuiz(){
-				answers = new Array(questions.length).fill(null);
-				currPosition = 0;
-				quizTime = minutesToSeconds(.5);
-				startTimer();
-			}
-
-			function backToMenu(){
-				answers = new Array(questions.length).fill(null);
-				currPosition = -1;
-			}
 
 </script>
 
@@ -221,37 +95,27 @@
 </style>
 
 
-{#if activityLog.length > 0}
-	{#each activityLog as log}
-		{log.event}
-		<br>
-
-		{log.description}
-		<br>
-
-	{/each}
-{/if}
-
+<ActivityLog ></ActivityLog>
 
 
 
 <div class="quiz">
-	{#if currPosition == -1}
+	{#if $currPosition == -1}
 		<div class="menu">
-			<button on:click={() => startQuiz()} disabled={!faceDetected}>Start Quiz</button>
+			<button on:click={() => startQuiz()} disabled={!$faceDetected}>Start Quiz</button>
 		</div>
-	{:else if (currPosition < answers.length)}
+	{:else if ($currPosition < $answers.length)}
 		<div class="attempt">
 			<div class="items">
 				<div class="question">
 					<h2>
-						{questions[currPosition].question}
+						{$questions[$currPosition].question}
 					</h2>
 				</div>
 
 				<div class="options">
-					{#each questions[currPosition].options as choices, index}
-						<button class="{answers[currPosition]==index ? 'selected' : ''}" on:click={() => answers[currPosition]=index}>
+					{#each $questions[$currPosition].options as choices, index}
+						<button class="{$answers[$currPosition]==index ? 'selected' : ''}" on:click={() => $answers[$currPosition]=index}>
 							{choices}
 						</button>
 					{/each}
@@ -260,14 +124,14 @@
 
 			<div class="footer">
 				<div class="progress-bar">
-					<div style="width:{currPosition/questions.length*100}%"></div>
+					<div style="width:{$currPosition/$questions.length*100}%"></div>
 				</div>
 
-				{formatTime(quizTime)}
+				<Timer></Timer>
 
 				<div class="item-control">
-					<button disabled={currPosition==0} on:click={() => currPosition--}>&lt;</button>
-					<button on:click={() => currPosition++}>&gt;</button>
+					<button disabled={$currPosition==0} on:click={() => currPosition.update(n=>n-1) }>&lt;</button>
+					<button on:click={() => currPosition.update(n=>n+1)}>&gt;</button>
 				</div>
 			</div>
 		</div>

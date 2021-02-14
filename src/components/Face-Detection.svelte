@@ -1,10 +1,6 @@
 <script>
+	import {faceDetected} from '../store/FaceDetectionStore.js';
 
-	import {createEventDispatcher} from 'svelte';
-	const dispatch = createEventDispatcher();
-
-
-	export let faceDetected = 0;
 	let video;
 	function startVideo(){
 			console.log(video);
@@ -27,12 +23,11 @@
 		function faceDetection(){
 				let interval = setInterval(async () => {
 						const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceExpressions()
-						faceDetected = detections.length;
-				if (faceDetected > 0){
+						$faceDetected = detections.length;
+				if ($faceDetected > 0){
 						clearInterval(interval);
-						dispatch('detected', {faceDetected});
 					}
-						console.log(faceDetected);
+						console.log($faceDetected);
 					}, 500);
 
 			}
